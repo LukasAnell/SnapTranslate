@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (chrome.runtime.lastError) {
                     console.log('Content script not ready, attempting to inject...');
                     chrome.scripting.executeScript({
-                        target: {tabId: tab.id}, files: ['contentScript.js']
+                        target: {tabId: tab.id}, files: ['src/content/contentScript.js']
                     }, function () {
                         if (chrome.runtime.lastError) {
                             console.error('Failed to inject content script:', chrome.runtime.lastError.message);
