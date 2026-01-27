@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Test Extension",
+  "name": "SnapTranslate",
   "version": "1.0",
-  "description": "A basic Chrome extension",
+  "description": "A Chrome/Edge browser extension that enables interactive screen region selection with planned image processing and translation capabilities",
   "permissions": [
     "activeTab",
     "scripting"
@@ -11,20 +11,20 @@
     "<all_urls>"
   ],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "src/background/background.js"
   },
   "action": {
-    "default_popup": "popup.html",
+    "default_popup": "src/popup/popup.html",
     "default_icon": {
-      "16": "icons/icon16.svg",
-      "48": "icons/icon48.svg",
-      "128": "icons/icon128.svg"
+      "16": "src/icons/icon16.svg",
+      "48": "src/icons/icon48.svg",
+      "128": "src/icons/icon128.svg"
     }
   },
   "icons": {
-    "16": "icons/icon16.svg",
-    "48": "icons/icon48.svg",
-    "128": "icons/icon128.svg"
+    "16": "src/icons/icon16.svg",
+    "48": "src/icons/icon48.svg",
+    "128": "src/icons/icon128.svg"
   },
   "content_scripts": [
     {
@@ -32,7 +32,7 @@
         "<all_urls>"
       ],
       "js": [
-        "contentScript.js"
+        "src/content/contentScript.js"
       ],
       "run_at": "document_idle"
     }

@@ -1,10 +1,6 @@
 {
-  "name": "TestExtension",
+  "name": "SnapTranslate",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "description": "A Chrome/Edge browser extension that enables interactive screen region selection with planned image processing and translation capabilities",
   "private": true
 }

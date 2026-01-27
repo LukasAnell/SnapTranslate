@@ -31,7 +31,25 @@ This extension allows users to:
 2. Open Chrome/Edge and navigate to `chrome://extensions/` (or `edge://extensions/`)
 3. Enable "Developer mode" (toggle in top right)
 4. Click "Load unpacked"
-5. Select the `SnapTranslate` folder
+5. Select the `SnapTranslate` folder (the root directory)
+
+## Project Structure
+
+```
+SnapTranslate/
+├── src/
+│   ├── background/
+│   │   └── background.js      # Service worker
+│   ├── content/
+│   │   └── contentScript.js   # Content script for page interaction
+│   ├── popup/
+│   │   ├── popup.html         # Extension popup UI
+│   │   ├── popup.js           # Popup logic
+│   │   └── popup.css          # Popup styling
+│   └── icons/                 # Extension icons
+├── manifest.json              # Extension configuration
+└── package.json               # Project metadata
+```
 
 ## Technical Details
 
