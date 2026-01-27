@@ -2,3 +2,17 @@
 *.iml
 out
 gen
+*.swp
+*.swo
+*~
+.vscode
+
+node_modules/
+npm-debug.log
+package-lock.json
+yarn.lock
+dist/
+build/
+
+Thumbs.db
+.DS_Store
