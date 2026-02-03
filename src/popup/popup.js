@@ -36,3 +36,24 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 });
+
+
+const fontSelection = document.getElementById('fontSelection');
+fontSelection.addEventListener('change', (event) => {
+    const selectedFont = event.target.value;
+    console.log(selectedFont);
+    const texts = document.querySelectorAll(".text");
+    //texts.forEach(text => {text.style.fontFamily = "Times New Roman, Times, serif";});
+    if (selectedFont==="Times"){
+        texts.forEach(text => {text.style.fontFamily = "Times New Roman, Times, serif";});
+    }
+    else if(selectedFont==="Arimo"){
+        texts.forEach(text => {text.style.fontFamily = "Arimo,sans-serif";})
+    }
+    else if(selectedFont==="Barlow"){
+        texts.forEach(text=>{text.style.fontFamily = "Barlow,sans-serif";})
+    }
+    else if(selectedFont==="FiraCode"){
+        texts.forEach(text=>{text.style.fontFamily = "Fira Code,monospace";})
+    }
+});

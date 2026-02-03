@@ -5,11 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Test Extension</title>
     <link rel="stylesheet" href="popup.css">
+
+    <!--Arima font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Arimo:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
+
+    <!--Fira Code -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Arimo:ital,wght@0,400..700;1,400..700&family=Fira+Code:wght@300..700&display=swap" rel="stylesheet">
+
 </head>
 <body>
 <div class="container">
-    <h1>Snap Translate</h1>
-    <button id="actionButton">Start</button>
+    <h1 class="text">Snap Translate</h1>
+    <button id="actionButton" class="text">Start</button>
+    <<select id="fontSelection" class="text" name="fonts">
+    <option value="Arimo" class="text">Arimo</option>
+    <option value="FiraCode" class ="text">Fira Code</option>
+    <option value="Times" class = "text">Times</option>
+    <option value="Barlow" class = "text" selected>Barlow</option>
+</select>
 </div>
 <script src="popup.js"></script>
 </body>
