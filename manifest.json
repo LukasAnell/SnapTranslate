@@ -5,10 +5,13 @@
   "description": "A Chrome/Edge browser extension that enables interactive screen region selection with planned image processing and translation capabilities",
   "permissions": [
     "activeTab",
-    "scripting"
+    "scripting",
+    "tabs",
+    "storage"
   ],
   "host_permissions": [
-    "<all_urls>"
+    "<all_urls>",
+    "https://libretranslate.com/*"
   ],
   "background": {
     "service_worker": "src/background/background.js"
