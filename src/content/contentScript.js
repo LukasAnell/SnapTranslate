@@ -96,15 +96,58 @@
         const rect = rectEl.getBoundingClientRect();
 
         try {
-            chrome.runtime.sendMessage({
-                action: 'selection-made', rect: {
-                    left: rect.left, top: rect.top, width: rect.width, height: rect.height
-                }
-            });
+            captureAndCropSelection(rect);
         } catch (err) {
             console.warn('Could not send selection-made message', err);
         }
 
         exitSelectionMode();
     }
+
+    function captureAndCropSelection(rect) {
+        // Send message to background to get the tab screenshot
+        chrome.runtime.sendMessage({
+            action: 'capture-tab'
+        }, (response) => {
+            if (!response || !response.imageData) {
+                console.error('Failed to capture tab');
+                return;
+            }
+
+            // Now crop the image using canvas (this works in content script)
+            const img = document.createElement('img');
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+
+                // Set canvas size to the selected rectangle
+                canvas.width = rect.width;
+                canvas.height = rect.height;
+
+                // Account for device pixel ratio
+                const dpr = window.devicePixelRatio || 1;
+
+                // Draw the cropped portion
+                ctx.drawImage(
+                    img,
+                    rect.left * dpr, rect.top * dpr,
+                    rect.width * dpr, rect.height * dpr,
+                    0, 0,
+                    rect.width, rect.height
+                );
+
+                const croppedImageData = canvas.toDataURL('image/png');
+                console.log('Cropped image data URL length:', croppedImageData.length);
+
+                // Send to background.js for translation/detection
+                chrome.runtime.sendMessage({
+                    action: 'process-image',
+                    imageData: croppedImageData
+                });
+            };
+
+            img.src = response.imageData;
+        });
+    }
+
 })();
