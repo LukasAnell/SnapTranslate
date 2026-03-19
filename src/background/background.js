@@ -15,7 +15,6 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg && msg.action === 'process-image') {
         console.log('Processing image:', msg.imageData.length);
         // TODO: perform image detection/translation with msg.imageData
-
         sendResponse({received: true});
     }
 });
