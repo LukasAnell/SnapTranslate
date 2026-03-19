@@ -35,4 +35,9 @@ document.addEventListener('DOMContentLoaded', function () {
             alert('An error occurred. Please try again.');
         }
     });
+
+    const optionsButton = document.getElementById('optionsButton');
+    optionsButton.addEventListener('click', function () {
+        chrome.runtime.openOptionsPage().then(r => console.log('Options page opened')).catch(err => console.error('Failed to open options page:', err));
+    });
 });

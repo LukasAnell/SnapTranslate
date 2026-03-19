@@ -128,22 +128,15 @@
                 const dpr = window.devicePixelRatio || 1;
 
                 // Draw the cropped portion
-                ctx.drawImage(
-                    img,
-                    rect.left * dpr, rect.top * dpr,
-                    rect.width * dpr, rect.height * dpr,
-                    0, 0,
-                    rect.width, rect.height
-                );
+                ctx.drawImage(img, rect.left * dpr, rect.top * dpr, rect.width * dpr, rect.height * dpr, 0, 0, rect.width, rect.height);
 
                 const croppedImageData = canvas.toDataURL('image/png');
                 console.log('Cropped image data URL length:', croppedImageData.length);
 
                 // Send to background.js for translation/detection
                 chrome.runtime.sendMessage({
-                    action: 'process-image',
-                    imageData: croppedImageData
-                });
+                    action: 'process-image', imageData: croppedImageData
+                }).then(r => console.log('Received response from background:', r)).catch(err => console.error('Error sending process-image message:', err));
             };
 
             img.src = response.imageData;
