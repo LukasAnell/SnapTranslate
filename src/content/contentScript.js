@@ -144,3 +144,69 @@
     }
 
 })();
+
+let tesseractLoadPromise = null;
+let ocrWorkerPromise = null;
+
+const workerOptions = {
+    workerPath: chrome.runtime.getURL("src/vendor/tesseract/worker.min.js"),
+    corePath: chrome.runtime.getURL("src/vendor/tesseract/tesseract-core.wasm.js"),
+    langPath: chrome.runtime.getURL("src/vendor/tesseract/lang-data")
+};
+
+async function getCreateWorker() {
+    if (!tesseractLoadPromise) {
+        tesseractLoadPromise = import(chrome.runtime.getURL("src/vendor/tesseract/tesseract.esm.min.js"));
+    }
+    const mod = await tesseractLoadPromise;
+    const tesseract = mod.default || mod;
+    if (!tesseract.createWorker) {
+        throw new Error("Tesseract createWorker was not found.");
+    }
+    return tesseract.createWorker;
+}
+
+async function getOcrWorker() {
+    if (!ocrWorkerPromise) {
+        ocrWorkerPromise = (async () => {
+            const createWorker = await getCreateWorker();
+            // Start with English only for reliability; add more langs later if needed.
+            return createWorker("eng", 1, workerOptions);
+        })();
+    }
+    return ocrWorkerPromise;
+}
+
+async function runOcr(imageData) {
+    const worker = await getOcrWorker();
+    const result = await worker.recognize(imageData);
+    const text = (result?.data?.text || "").trim();
+    const confidence = result?.data?.confidence ?? 0;
+    return {text, confidence, langUsed: "eng"};
+}
+
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+    if (msg && msg.action === "start-selection") {
+        console.log("test message - start-selection");
+        enterSelectionMode();
+        return;
+    }
+
+    if (msg && msg.action === "stop-selection") {
+        exitSelectionMode();
+        return;
+    }
+
+    if (msg && msg.action === "ocr-image") {
+        (async () => {
+            try {
+                const ocr = await runOcr(msg.imageData);
+                sendResponse({ocr});
+            } catch (err) {
+                sendResponse({error: String(err)});
+            }
+        })();
+        return true;
+    }
+});
+

@@ -1,8 +1,28 @@
+import Tesseract from "../vendor/tesseract/tesseract.esm.min.js";
+
+const {createWorker} = Tesseract;
+
+const workerOptions = {
+    workerPath: chrome.runtime.getURL("src/vendor/tesseract/worker.min.js"),
+    corePath: chrome.runtime.getURL("src/vendor/tesseract/tesseract-core.wasm.js"),
+    langPath: chrome.runtime.getURL("src/vendor/tesseract/lang-data")
+};
+
+const SCRIPT_TO_LANGS = {
+    Latin: ["eng", "spa", "fra", "deu", "ita", "por", "nld"],
+    Cyrillic: ["rus", "ukr", "bul"],
+    Han: ["chi_sim", "chi_tra"],
+    Arabic: ["ara"],
+    Devanagari: ["hin"],
+    Japanese: ["jpn"],
+    Korean: ["kor"]
+};
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-    if (msg && msg.action === 'capture-tab') {
-        chrome.tabs.captureVisibleTab(sender.tab.windowId, {format: 'png'}, (dataUrl) => {
+    if (msg && msg.action === "capture-tab") {
+        chrome.tabs.captureVisibleTab(sender.tab.windowId, {format: "png"}, (dataUrl) => {
             if (chrome.runtime.lastError) {
-                console.error('Error capturing tab:', chrome.runtime.lastError);
+                console.error("Error capturing tab:", chrome.runtime.lastError);
                 sendResponse({error: chrome.runtime.lastError.message});
                 return;
             }
@@ -11,7 +31,18 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         return true;
     }
 
-    if (msg && msg.action === 'process-image') {
+    if (msg && msg.action === "process-image") {
+        chrome.tabs.sendMessage(sender.tab.id, {
+            action: "ocr-image", imageData: msg.imageData
+        }, (resp) => {
+            if (chrome.runtime.lastError) {
+                sendResponse({error: chrome.runtime.lastError.message});
+                return;
+            }
+            sendResponse(resp);
+        });
+
+        /*
         chrome.storage.local.get(['deeplApiKey'], async (result) => {
             const apiKey = result.deeplApiKey;
             if (!apiKey) {
@@ -35,6 +66,37 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
                 sendResponse({error: error.message});
             }
         });
+         */
+
         return true;
     }
 });
+
+async function tesseractOCR(imageData) {
+    const osdWorker = await createWorker("osd", 1, workerOptions);
+    let script = "Unknown";
+
+    try {
+        const detectRes = await osdWorker.detect(imageData);
+        script = detectRes?.data?.script || "Unknown";
+    } catch (err) {
+        console.warn("Script detection failed, falling back to English OCR:", err);
+    } finally {
+        await osdWorker.terminate();
+    }
+
+    const candidates = SCRIPT_TO_LANGS[script] || ["eng"];
+    const langString = candidates.join("+");
+
+    const ocrWorker = await createWorker(langString, 1, workerOptions);
+
+    try {
+        const {data: {text, confidence}} = await ocrWorker.recognize(imageData);
+
+        return {
+            text: (text || "").trim(), confidence: confidence ?? 0, script, langUsed: langString
+        };
+    } finally {
+        await ocrWorker.terminate();
+    }
+}
