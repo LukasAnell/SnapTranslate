@@ -4,39 +4,15 @@ const { createWorker } = Tesseract;
 
 const workerOptions = {
     workerPath: chrome.runtime.getURL("src/vendor/tesseract/worker.min.js"),
-    corePath: chrome.runtime.getURL("src/vendor/tesseract/tesseract-core.wasm.js"),
+    corePath: chrome.runtime.getURL(
+        "src/vendor/tesseract/tesseract-core.wasm.js",
+    ),
     langPath: chrome.runtime.getURL("src/vendor/tesseract/lang-data"),
-};
-
-const SCRIPT_TO_LANGS = {
-    Latin: ["eng", "spa", "fra", "deu", "ita", "por", "nld"],
-    Cyrillic: ["rus", "ukr", "bul"],
-    Han: ["chi_sim", "chi_tra"],
-    Arabic: ["ara"],
-    Devanagari: ["hin"],
-    Japanese: ["jpn"],
-    Korean: ["kor"],
+    workerBlobURL: false,
 };
 
 async function tesseractOCR(imageData) {
-    const osdWorker = await createWorker("osd", 1, workerOptions);
-    let script = "Unknown";
-
-    try {
-        const detectRes = await osdWorker.detect(imageData);
-        script = detectRes?.data?.script || "Unknown";
-    } catch (err) {
-        console.warn(
-            "Script detection failed, falling back to English OCR:",
-            err,
-        );
-    } finally {
-        await osdWorker.terminate();
-    }
-
-    const candidates = SCRIPT_TO_LANGS[script] || ["eng"];
-    const langString = candidates.join("+");
-
+    const langString = "eng";
     const ocrWorker = await createWorker(langString, 1, workerOptions);
 
     try {
@@ -47,7 +23,7 @@ async function tesseractOCR(imageData) {
         return {
             text: (text || "").trim(),
             confidence: confidence ?? 0,
-            script,
+            script: "Unknown",
             langUsed: langString,
         };
     } finally {
