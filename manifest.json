@@ -30,5 +30,12 @@
             "js": ["src/content/contentScript.js"],
             "run_at": "document_idle"
         }
+    ],
+    "offscreen_documents": [
+        {
+            "url": "src/offscreen/offscreen.html",
+            "reasons": ["WORKERS"],
+            "justification": "Run OCR in an offscreen document to access Worker APIs"
+        }
     ]
 }
