@@ -30,5 +30,16 @@
             "js": ["src/content/contentScript.js"],
             "run_at": "document_idle"
         }
+    ],
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "src/vendor/tesseract/worker.min.js",
+                "src/vendor/tesseract/tesseract-core.wasm.js",
+                "src/vendor/tesseract/tesseract-core.wasm",
+                "src/vendor/tesseract/lang-data/**"
+            ],
+            "matches": ["<all_urls>"]
+        }
     ]
 }
