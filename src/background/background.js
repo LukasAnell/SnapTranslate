@@ -1,24 +1,15 @@
-import Tesseract from "../vendor/tesseract/tesseract.esm.min.js";
+async function ensureOffscreenDocument() {
+    const hasDocument = await chrome.offscreen?.hasDocument?.();
+    if (hasDocument) {
+        return;
+    }
 
-const { createWorker } = Tesseract;
-
-const workerOptions = {
-    workerPath: chrome.runtime.getURL("src/vendor/tesseract/worker.min.js"),
-    corePath: chrome.runtime.getURL(
-        "src/vendor/tesseract/tesseract-core.wasm.js",
-    ),
-    langPath: chrome.runtime.getURL("src/vendor/tesseract/lang-data"),
-};
-
-const SCRIPT_TO_LANGS = {
-    Latin: ["eng", "spa", "fra", "deu", "ita", "por", "nld"],
-    Cyrillic: ["rus", "ukr", "bul"],
-    Han: ["chi_sim", "chi_tra"],
-    Arabic: ["ara"],
-    Devanagari: ["hin"],
-    Japanese: ["jpn"],
-    Korean: ["kor"],
-};
+    await chrome.offscreen.createDocument({
+        url: "src/offscreen/offscreen.html",
+        reasons: [chrome.offscreen.Reason.WORKERS],
+        justification: "Run OCR in an offscreen document to access Worker APIs",
+    });
+}
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg && msg.action === "capture-tab") {
@@ -43,8 +34,23 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg && msg.action === "process-image") {
         (async () => {
             try {
-                const ocr = await tesseractOCR(msg.imageData);
-                sendResponse({ ocr });
+                await ensureOffscreenDocument();
+
+                chrome.runtime.sendMessage(
+                    {
+                        action: "offscreen-ocr",
+                        imageData: msg.imageData,
+                    },
+                    (resp) => {
+                        if (chrome.runtime.lastError) {
+                            sendResponse({
+                                error: chrome.runtime.lastError.message,
+                            });
+                            return;
+                        }
+                        sendResponse(resp);
+                    },
+                );
             } catch (error) {
                 sendResponse({ error: String(error) });
             }
@@ -53,40 +59,3 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         return true;
     }
 });
-
-async function tesseractOCR(imageData) {
-    const osdWorker = await createWorker("osd", 1, workerOptions);
-    let script = "Unknown";
-
-    try {
-        const detectRes = await osdWorker.detect(imageData);
-        script = detectRes?.data?.script || "Unknown";
-    } catch (err) {
-        console.warn(
-            "Script detection failed, falling back to English OCR:",
-            err,
-        );
-    } finally {
-        await osdWorker.terminate();
-    }
-
-    const candidates = SCRIPT_TO_LANGS[script] || ["eng"];
-    const langString = candidates.join("+");
-
-    const ocrWorker = await createWorker(langString, 1, workerOptions);
-
-    try {
-        const {
-            data: { text, confidence },
-        } = await ocrWorker.recognize(imageData);
-
-        return {
-            text: (text || "").trim(),
-            confidence: confidence ?? 0,
-            script,
-            langUsed: langString,
-        };
-    } finally {
-        await ocrWorker.terminate();
-    }
-}
