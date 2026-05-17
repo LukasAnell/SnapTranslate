@@ -15,9 +15,12 @@
         if (msg && msg.action === "start-selection") {
             console.log("test message - start-selection");
             enterSelectionMode();
+            sendResponse({ ok: true });
+            return;
         }
         if (msg && msg.action === "stop-selection") {
             exitSelectionMode();
+            sendResponse({ ok: true });
         }
     });
 

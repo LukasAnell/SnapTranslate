@@ -31,9 +31,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             "Content script not available on this page:",
                             chrome.runtime.lastError.message,
                         );
-                        alert(
-                            "Could not activate selection mode on this page.",
-                        );
+                        window.close();
                         return;
                     }
                     window.close();
