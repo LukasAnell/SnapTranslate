@@ -9,10 +9,12 @@ const workerOptions = {
     ),
     langPath: chrome.runtime.getURL("src/vendor/tesseract/lang-data"),
     workerBlobURL: false,
+    gzip: false,
 };
 
 async function tesseractOCR(imageData) {
-    const langString = "eng";
+    const langString = "eng+spa+fra+chi_sim+chi_tra+kor+jpn+deu+por+ita+nld";
+
     const ocrWorker = await createWorker(langString, 1, workerOptions);
 
     try {
