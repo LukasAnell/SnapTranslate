@@ -25,36 +25,18 @@ document.addEventListener("DOMContentLoaded", function () {
             chrome.tabs.sendMessage(
                 tab.id,
                 { action: "start-selection" },
-                function (response) {
+                function () {
                     if (chrome.runtime.lastError) {
-                        console.log(
-                            "Content script not ready, attempting to inject...",
+                        console.error(
+                            "Content script not available on this page:",
+                            chrome.runtime.lastError.message,
                         );
-                        chrome.scripting.executeScript(
-                            {
-                                target: { tabId: tab.id },
-                                files: ["src/content/contentScript.js"],
-                            },
-                            function () {
-                                if (chrome.runtime.lastError) {
-                                    console.error(
-                                        "Failed to inject content script:",
-                                        chrome.runtime.lastError.message,
-                                    );
-                                    alert(
-                                        "Could not activate selection mode on this page.",
-                                    );
-                                    return;
-                                }
-                                chrome.tabs.sendMessage(tab.id, {
-                                    action: "start-selection",
-                                });
-                                window.close();
-                            },
+                        alert(
+                            "Could not activate selection mode on this page.",
                         );
-                    } else {
-                        window.close();
+                        return;
                     }
+                    window.close();
                 },
             );
         } catch (error) {
