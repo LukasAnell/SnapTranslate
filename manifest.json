@@ -39,7 +39,11 @@
                 "src/vendor/tesseract/tesseract-core.wasm",
                 "src/vendor/tesseract/lang-data/**"
             ],
-            "matches": ["<all_urls>"]
+            "matches": ["<all_urls>"],
+            "extension_pages": true
         }
-    ]
+    ],
+    "content_security_policy": {
+        "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+    }
 }
