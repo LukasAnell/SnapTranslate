@@ -1,3 +1,51 @@
+async function getTranslationConfig() {
+    return new Promise((resolve) => {
+        chrome.storage.local.get(["deeplApiKey", "deeplPlan"], (result) => {
+            resolve({
+                apiKey: result.deeplApiKey || "",
+                plan: result.deeplPlan || "free",
+            });
+        });
+    });
+}
+
+function getDeepLBaseUrl(plan) {
+    return plan === "pro"
+        ? "https://api.deepl.com"
+        : "https://api-free.deepl.com";
+}
+
+async function translateWithDeepL(text, targetLang) {
+    const { apiKey, plan } = await getTranslationConfig();
+    if (!apiKey) {
+        return { error: "DeepL API key not configured." };
+    }
+
+    const url = `${getDeepLBaseUrl(plan)}/v2/translate`;
+    const body = new URLSearchParams({
+        text,
+        target_lang: targetLang,
+    });
+
+    const response = await fetch(url, {
+        method: "POST",
+        headers: {
+            Authorization: `DeepL-Auth-Key ${apiKey}`,
+            "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body,
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        return { error: `DeepL error (${response.status}): ${errorText}` };
+    }
+
+    const data = await response.json();
+    const translation = data?.translations?.[0]?.text || "";
+    return { translation };
+}
+
 async function ensureOffscreenDocument() {
     const hasDocument = await chrome.offscreen?.hasDocument?.();
     if (hasDocument) {
