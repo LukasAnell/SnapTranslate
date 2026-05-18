@@ -27,11 +27,30 @@ document.addEventListener("DOMContentLoaded", function () {
                 { action: "start-selection" },
                 function () {
                     if (chrome.runtime.lastError) {
-                        console.error(
-                            "Content script not available on this page:",
+                        console.warn(
+                            "Content script not available on this page, attempting to inject:",
                             chrome.runtime.lastError.message,
                         );
-                        window.close();
+                        chrome.scripting.executeScript(
+                            {
+                                target: { tabId: tab.id },
+                                files: ["src/content/contentScript.js"],
+                            },
+                            function () {
+                                if (chrome.runtime.lastError) {
+                                    console.error(
+                                        "Failed to inject content script:",
+                                        chrome.runtime.lastError.message,
+                                    );
+                                    window.close();
+                                    return;
+                                }
+                                chrome.tabs.sendMessage(tab.id, {
+                                    action: "start-selection",
+                                });
+                                window.close();
+                            },
+                        );
                         return;
                     }
                     window.close();
