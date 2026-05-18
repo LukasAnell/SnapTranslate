@@ -89,13 +89,27 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
                         action: "offscreen-ocr",
                         imageData: msg.imageData,
                     },
-                    (resp) => {
+                    async (resp) => {
                         if (chrome.runtime.lastError) {
                             sendResponse({
                                 error: chrome.runtime.lastError.message,
                             });
                             return;
                         }
+
+                        if (resp?.ocr?.text) {
+                            const translationResult = await translateWithDeepL(
+                                resp.ocr.text,
+                                "EN",
+                            );
+                            sendResponse({
+                                ...resp,
+                                translation: translationResult.translation,
+                                translationError: translationResult.error,
+                            });
+                            return;
+                        }
+
                         sendResponse(resp);
                     },
                 );
