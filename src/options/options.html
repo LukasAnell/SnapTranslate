@@ -39,6 +39,34 @@
                 <option value="ZH">Chinese (simplified)</option>
             </select>
         </label>
+        <fieldset id="ocrLanguages">
+            <legend>Text recognition (OCR) languages</legend>
+            <p class="hint">
+                Only check languages you expect to select text in. Each
+                additional language slows down every scan and increases the
+                amount of data loaded.
+            </p>
+            <label
+                ><input type="checkbox" value="eng" checked disabled /> English
+                (always on)</label
+            >
+            <label><input type="checkbox" value="spa" /> Spanish</label>
+            <label><input type="checkbox" value="fra" /> French</label>
+            <label><input type="checkbox" value="deu" /> German</label>
+            <label><input type="checkbox" value="ita" /> Italian</label>
+            <label><input type="checkbox" value="por" /> Portuguese</label>
+            <label><input type="checkbox" value="nld" /> Dutch</label>
+            <label><input type="checkbox" value="jpn" /> Japanese</label>
+            <label><input type="checkbox" value="kor" /> Korean</label>
+            <label
+                ><input type="checkbox" value="chi_sim" /> Chinese
+                (simplified)</label
+            >
+            <label
+                ><input type="checkbox" value="chi_tra" /> Chinese
+                (traditional)</label
+            >
+        </fieldset>
         <button id="save">Save</button>
         <p id="status"></p>
 

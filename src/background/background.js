@@ -13,6 +13,18 @@ async function getTranslationConfig() {
     });
 }
 
+async function getOcrLanguages() {
+    return new Promise((resolve) => {
+        chrome.storage.local.get(["ocrLanguages"], (result) => {
+            const langs = Array.isArray(result.ocrLanguages)
+                ? result.ocrLanguages
+                : [];
+
+            resolve([...new Set(["eng", ...langs])]);
+        });
+    });
+}
+
 function getDeepLBaseUrl(plan) {
     return plan === "pro"
         ? "https://api.deepl.com"
@@ -25,11 +37,13 @@ async function translateWithDeepL(text, targetLang) {
         plan,
         targetLang: configuredTargetLang,
     } = await getTranslationConfig();
+
     if (!apiKey) {
         return { error: "DeepL API key not configured." };
     }
 
     const url = `${getDeepLBaseUrl(plan)}/v2/translate`;
+
     const body = new URLSearchParams({
         text,
         target_lang: targetLang || configuredTargetLang,
@@ -51,11 +65,13 @@ async function translateWithDeepL(text, targetLang) {
 
     const data = await response.json();
     const translation = data?.translations?.[0]?.text || "";
+
     return { translation };
 }
 
 async function ensureOffscreenDocument() {
     const hasDocument = await chrome.offscreen?.hasDocument?.();
+
     if (hasDocument) {
         return;
     }
@@ -78,12 +94,16 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
                         "Error capturing tab:",
                         chrome.runtime.lastError,
                     );
+
                     sendResponse({ error: chrome.runtime.lastError.message });
+
                     return;
                 }
+
                 sendResponse({ imageData: dataUrl });
             },
         );
+
         return true;
     }
 
@@ -92,16 +112,20 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             try {
                 await ensureOffscreenDocument();
 
+                const ocrLanguages = await getOcrLanguages();
+
                 chrome.runtime.sendMessage(
                     {
                         action: "offscreen-ocr",
                         imageData: msg.imageData,
+                        ocrLanguages,
                     },
                     async (resp) => {
                         if (chrome.runtime.lastError) {
                             sendResponse({
                                 error: chrome.runtime.lastError.message,
                             });
+
                             return;
                         }
 
@@ -109,11 +133,13 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
                             const translationResult = await translateWithDeepL(
                                 resp.ocr.text,
                             );
+
                             sendResponse({
                                 ...resp,
                                 translation: translationResult.translation,
                                 translationError: translationResult.error,
                             });
+
                             return;
                         }
 
