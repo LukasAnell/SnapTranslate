@@ -100,7 +100,9 @@ SnapTranslate/
 
 ## Development Status
 
-**Early Development** - Core selection functionality is implemented. Image processing and translation features are planned for future releases.
+**Feature-complete for v1.** The full selection -> capture -> OCR -> translation pipeline is implemented and merged into `master`, including a configurable target language, configurable OCR languages, and a results box with loading/error states.
+
+---
 
 ## Notes
 
