@@ -25,7 +25,9 @@
     });
 
     function enterSelectionMode() {
-        if (overlay) return;
+        if (overlay) {
+            return;
+        }
 
         overlay = document.createElement("div");
         overlay.id = "selection-overlay";
@@ -55,14 +57,19 @@
     }
 
     function exitSelectionMode() {
-        if (!overlay) return;
+        if (!overlay) {
+            return;
+        }
 
         overlay.removeEventListener("mousedown", onMouseDown);
         overlay.removeEventListener("mousemove", onMouseMove);
         overlay.removeEventListener("mouseup", onMouseUp);
         window.removeEventListener("keydown", onKeyDown);
 
-        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+        if (overlay.parentNode) {
+            overlay.parentNode.removeChild(overlay);
+        }
+
         overlay = null;
         rectEl = null;
         selecting = false;
@@ -86,7 +93,10 @@
     }
 
     function onMouseMove(e) {
-        if (!selecting) return;
+        if (!selecting) {
+            return;
+        }
+
         const x = Math.min(e.clientX, startX);
         const y = Math.min(e.clientY, startY);
         const w = Math.abs(e.clientX - startX);
@@ -98,17 +108,35 @@
     }
 
     function onMouseUp() {
-        if (!selecting) return;
-        selecting = false;
-        const rect = rectEl.getBoundingClientRect();
-
-        try {
-            captureAndCropSelection(rect);
-        } catch (err) {
-            console.warn("Could not send selection-made message", err);
+        if (!selecting) {
+            return;
         }
 
+        selecting = false;
+        const rect = rectEl.getBoundingClientRect();
+        // save rectangle's dimensions and position before removing the overlay
+        const rectSnapshot = {
+            left: rect.left,
+            top: rect.top,
+            width: rect.width,
+            height: rect.height,
+        };
+
         exitSelectionMode();
+
+        if (rectSnapshot.width < 4 || rectSnapshot.height < 4) {
+            // not a real selection if area is too small.
+            return;
+        }
+
+        showResultBox(rectSnapshot, { loading: true });
+
+        try {
+            captureAndCropSelection(rectSnapshot);
+        } catch (err) {
+            console.warn("Could not process selection", err);
+            updateResultBox({ error: String(err) });
+        }
     }
 
     function captureAndCropSelection(rect) {
@@ -118,25 +146,31 @@
                 action: "capture-tab",
             },
             (response) => {
-                if (!response || !response.imageData) {
-                    console.error("Failed to capture tab");
+                if (chrome.runtime.lastError) {
+                    updateResultBox({
+                        error: chrome.runtime.lastError.message,
+                    });
                     return;
                 }
 
-                // Now crop the image using canvas (this works in content script)
+                if (!response || !response.imageData) {
+                    console.error("Failed to capture tab");
+                    updateResultBox({ error: "Failed to capture the page." });
+                    return;
+                }
+
+                // Now crop the image using canvas
                 const img = document.createElement("img");
                 img.onload = () => {
                     const canvas = document.createElement("canvas");
                     const ctx = canvas.getContext("2d");
 
-                    // Set canvas size to the selected rectangle
                     canvas.width = rect.width;
                     canvas.height = rect.height;
 
                     // Account for device pixel ratio
                     const dpr = window.devicePixelRatio || 1;
 
-                    // Draw the cropped portion
                     ctx.drawImage(
                         img,
                         rect.left * dpr,
@@ -150,10 +184,6 @@
                     );
 
                     const croppedImageData = canvas.toDataURL("image/png");
-                    console.log(
-                        "Cropped image data URL length:",
-                        croppedImageData.length,
-                    );
 
                     // Send to background.js for OCR/translation
                     chrome.runtime.sendMessage(
@@ -167,18 +197,190 @@
                                     "Error sending process-image message:",
                                     chrome.runtime.lastError.message,
                                 );
+                                updateResultBox({
+                                    error: chrome.runtime.lastError.message,
+                                });
                                 return;
                             }
-                            console.log(
-                                "Received response from background:",
-                                resp,
-                            );
+
+                            if (!resp || resp.error) {
+                                updateResultBox({
+                                    error:
+                                        (resp && resp.error) ||
+                                        "Something went wrong processing the image.",
+                                });
+                                return;
+                            }
+
+                            updateResultBox({
+                                ocrText: resp.ocr?.text || "",
+                                translation: resp.translation || "",
+                                translationError: resp.translationError,
+                            });
                         },
                     );
+                };
+                img.onerror = () => {
+                    updateResultBox({
+                        error: "Could not load the captured screenshot.",
+                    });
                 };
 
                 img.src = response.imageData;
             },
         );
+    }
+
+    let resultBoxEl = null;
+
+    function showResultBox(rect, { loading } = {}) {
+        removeResultBox();
+
+        resultBoxEl = document.createElement("div");
+        resultBoxEl.id = "snaptranslate-result-box";
+        Object.assign(resultBoxEl.style, {
+            position: "fixed",
+            zIndex: "2147483647",
+            maxWidth: "320px",
+            maxHeight: "260px",
+            overflowY: "auto",
+            background: "#ffffff",
+            color: "#1a1a1a",
+            border: "1px solid #d0d7de",
+            borderRadius: "8px",
+            boxShadow: "0 6px 20px rgba(0,0,0,0.18)",
+            padding: "10px 12px",
+            font: "13px/1.4 -apple-system, BlinkMacSystemFont, sans-serif",
+        });
+
+        const { left, top } = getResultBoxPosition(rect);
+        resultBoxEl.style.left = `${left}px`;
+        resultBoxEl.style.top = `${top}px`;
+
+        const closeBtn = document.createElement("button");
+        closeBtn.textContent = "\u00d7";
+        Object.assign(closeBtn.style, {
+            position: "absolute",
+            top: "4px",
+            right: "6px",
+            border: "none",
+            background: "transparent",
+            fontSize: "16px",
+            lineHeight: "1",
+            cursor: "pointer",
+            color: "#555",
+        });
+        closeBtn.addEventListener("click", removeResultBox);
+        resultBoxEl.appendChild(closeBtn);
+
+        const body = document.createElement("div");
+        body.id = "snaptranslate-result-body";
+        body.style.marginTop = "4px";
+        body.style.paddingRight = "14px";
+        body.textContent = loading ? "Reading text from image…" : "";
+        resultBoxEl.appendChild(body);
+
+        document.documentElement.appendChild(resultBoxEl);
+
+        // Dismiss on outside click / Escape
+        document.addEventListener("mousedown", onOutsideClick, true);
+        document.addEventListener("keydown", onResultBoxKeyDown, true);
+    }
+
+    function getResultBoxPosition(rect) {
+        const margin = 8;
+        const boxWidth = 320;
+        const boxHeightEstimate = 120;
+
+        let left = rect.left;
+        let top = rect.top + rect.height + margin;
+
+        if (top + boxHeightEstimate > window.innerHeight) {
+            top = Math.max(margin, rect.top - boxHeightEstimate - margin);
+        }
+
+        if (left + boxWidth > window.innerWidth) {
+            left = Math.max(margin, window.innerWidth - boxWidth - margin);
+        }
+
+        return { left, top };
+    }
+
+    function updateResultBox({
+        ocrText,
+        translation,
+        translationError,
+        error,
+    }) {
+        if (!resultBoxEl) return;
+        const body = resultBoxEl.querySelector("#snaptranslate-result-body");
+        if (!body) return;
+
+        body.textContent = "";
+
+        if (error) {
+            const errEl = document.createElement("div");
+            errEl.textContent = `Error: ${error}`;
+            errEl.style.color = "#c0392b";
+            body.appendChild(errEl);
+            return;
+        }
+
+        if (!ocrText) {
+            const noneEl = document.createElement("div");
+            noneEl.textContent = "No text detected in that selection.";
+            noneEl.style.color = "#555";
+            body.appendChild(noneEl);
+            return;
+        }
+
+        const ocrLabel = document.createElement("div");
+        ocrLabel.textContent = "Detected text";
+        ocrLabel.style.fontWeight = "600";
+        ocrLabel.style.marginBottom = "2px";
+        body.appendChild(ocrLabel);
+
+        const ocrEl = document.createElement("div");
+        ocrEl.textContent = ocrText;
+        ocrEl.style.marginBottom = "8px";
+        ocrEl.style.whiteSpace = "pre-wrap";
+        body.appendChild(ocrEl);
+
+        const translationLabel = document.createElement("div");
+        translationLabel.textContent = "Translation";
+        translationLabel.style.fontWeight = "600";
+        translationLabel.style.marginBottom = "2px";
+        body.appendChild(translationLabel);
+
+        const translationEl = document.createElement("div");
+        translationEl.style.whiteSpace = "pre-wrap";
+        if (translationError) {
+            translationEl.textContent = translationError;
+            translationEl.style.color = "#c0392b";
+        } else {
+            translationEl.textContent = translation || "(no translation)";
+        }
+        body.appendChild(translationEl);
+    }
+
+    function removeResultBox() {
+        if (resultBoxEl && resultBoxEl.parentNode) {
+            resultBoxEl.parentNode.removeChild(resultBoxEl);
+        }
+        resultBoxEl = null;
+        document.removeEventListener("mousedown", onOutsideClick, true);
+        document.removeEventListener("keydown", onResultBoxKeyDown, true);
+    }
+
+    function onOutsideClick(e) {
+        if (resultBoxEl && !resultBoxEl.contains(e.target)) {
+            removeResultBox();
+        }
+    }
+
+    function onResultBoxKeyDown(e) {
+        if (e.key === "Escape") {
+            removeResultBox();
+        }
     }
 })();
