@@ -16,20 +16,36 @@ A Chrome/Edge (Manifest V3) browser extension that lets you drag-select a rectan
 
 ## How It Works
 
-1. Click the extension icon in your browser toolbar
-2. Click the action button in the popup
-3. Your cursor changes to a crosshair
-4. Click and drag to select a rectangular region on the page
-5. Release to capture the selection
-6. Press `ESC` to cancel selection mode
+1. Click the extension icon in your browser toolbar.
+2. Click the action button in the popup.
+3. Your cursor changes to a crosshair.
+4. Click and drag to select a rectangular region on the page (`Esc` cancels).
+5. Release to capture the selection.
+6. The captured region is OCR'd and the extracted text is sent to DeepL for translation.
+7. A results box appears near your selection showing the translated text.
 
-## Installation
+---
 
-1. Clone or download this repository
-2. Open Chrome/Edge and navigate to `chrome://extensions/` (or `edge://extensions/`)
-3. Enable "Developer mode" (toggle in top right)
-4. Click "Load unpacked"
-5. Select the `SnapTranslate` folder (the root directory)
+## Configuration
+
+Each user is expected to supply their own DeepL API key rather than the extension shipping with a shared one. The DeepL free tier is a lifetime 1,000,000-character cap.
+
+Open the extension's **Options** page (right-click the toolbar icon -> Options, or via `chrome://extensions`) to configure:
+
+- **DeepL API key & plan** (Free or Pro)
+- **Target translation language** (e.g. `EN-US`, `EN-GB`, `PT-PT`)
+- **OCR languages**: which of the vendored Tesseract language packs to load per scan. English is always enabled, and all others can be selected/deselected to speed up OCR.
+
+---
+
+## Planned Features
+
+- **Automated tests**: no test suite exists yet.
+- **CI/CD for store updates**: automate future Chrome Web Store version pushes via the Publish API once the extension has an Item ID from its first review.
+- **Alternative/local translation option**: explore options that don't require a per-user DeepL API key.
+- **Smaller vendored footprint**: currently all Tesseract language packs ship in the package regardless of which are enabled at runtime. On-demand language data fetching could lower this.
+
+---
 
 ## Project Structure
 
