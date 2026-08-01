@@ -76,10 +76,27 @@ SnapTranslate/
 
 - **Manifest Version:** 3
 - **Permissions:** `activeTab`, `scripting`, `host_permissions` for all URLs
+- **OCR:** [Tesseract.js](https://github.com/naptha/tesseract.js), vendored locally and run inside an offscreen document
+- **Translation:** [DeepL API](https://www.deepl.com/docs-api) (user-supplied key)
 - **Components:**
-  - `popup.js` - Triggers selection mode
-  - `contentScript.js` - Handles UI overlay and mouse interactions
-  - `background.js` - Service worker for message handling and future processing
+  * `popup.js` - triggers selection mode
+  * `contentScript.js` - handles the selection overlay and mouse interactions
+  * `background.js` - service worker for message routing and OCR/translation coordination
+  * `offscreen.js` - hosts the Tesseract.js worker
+  * `options.js` - DeepL API key/plan and language configuration
+
+---
+
+## Installation
+
+1. Clone or download this repository.
+2. Open Chrome/Edge and navigate to `chrome://extensions/` (or `edge://extensions/`).
+3. Enable **Developer mode** (toggle in the top right).
+4. Click **Load unpacked**.
+5. Select the `SnapTranslate` folder (the root directory).
+6. Open the extension's Options page and enter your DeepL API key before translating.
+
+---
 
 ## Development Status
 
