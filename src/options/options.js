@@ -19,8 +19,10 @@ document.getElementById("save").addEventListener("click", () => {
     const apiKey = document.getElementById("apiKey").value;
     const deeplPlan = document.getElementById("deeplPlan").value;
     const targetLang = document.getElementById("targetLang").value;
+    const ocrLanguages = getCheckedOcrLanguages();
+
     chrome.storage.local.set(
-        { deeplApiKey: apiKey, deeplPlan, targetLang },
+        { deeplApiKey: apiKey, deeplPlan, targetLang, ocrLanguages },
         () => {
             document.getElementById("status").textContent = "Saved!";
         },
@@ -29,7 +31,7 @@ document.getElementById("save").addEventListener("click", () => {
 
 // Load saved settings on page load
 chrome.storage.local.get(
-    ["deeplApiKey", "deeplPlan", "targetLang"],
+    ["deeplApiKey", "deeplPlan", "targetLang", "ocrLanguages"],
     (result) => {
         if (result.deeplApiKey) {
             document.getElementById("apiKey").value = result.deeplApiKey;
@@ -39,6 +41,19 @@ chrome.storage.local.get(
         }
         if (result.targetLang) {
             document.getElementById("targetLang").value = result.targetLang;
+        }
+        if (Array.isArray(result.ocrLanguages)) {
+            const boxes = document.querySelectorAll(
+                '#ocrLanguages input[type="checkbox"]',
+            );
+
+            boxes.forEach((box) => {
+                if (box.value === "eng") {
+                    return; // always on
+                }
+
+                box.checked = result.ocrLanguages.includes(box.value);
+            });
         }
     },
 );
