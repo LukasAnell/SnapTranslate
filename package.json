@@ -1,6 +1,10 @@
 {
-  "name": "SnapTranslate",
-  "version": "1.0.0",
-  "description": "A Chrome/Edge browser extension that enables interactive screen region selection with planned image processing and translation capabilities",
-  "private": true
+    "name": "snaptranslate",
+    "version": "1.0.0",
+    "description": "A Chrome/Edge browser extension that enables interactive screen region selection with planned image processing and translation capabilities",
+    "private": true,
+    "dependencies": {
+        "deepl-node": "^1.24.0",
+        "tesseract.js": "^7.0.0"
+    }
 }

@@ -1,40 +1,49 @@
 {
-  "manifest_version": 3,
-  "name": "SnapTranslate",
-  "version": "1.0",
-  "description": "A Chrome/Edge browser extension that enables interactive screen region selection with planned image processing and translation capabilities",
-  "permissions": [
-    "activeTab",
-    "scripting"
-  ],
-  "host_permissions": [
-    "<all_urls>"
-  ],
-  "background": {
-    "service_worker": "src/background/background.js"
-  },
-  "action": {
-    "default_popup": "src/popup/popup.html",
-    "default_icon": {
-      "16": "src/icons/icon16.svg",
-      "48": "src/icons/icon48.svg",
-      "128": "src/icons/icon128.svg"
+    "manifest_version": 3,
+    "name": "SnapTranslate",
+    "version": "1.0",
+    "description": "A Chrome/Edge browser extension that enables interactive screen region selection with planned image processing and translation capabilities",
+    "permissions": ["activeTab", "scripting", "tabs", "storage", "offscreen"],
+
+    "host_permissions": ["<all_urls>", "https://libretranslate.com/*"],
+    "background": {
+        "service_worker": "src/background/background.js",
+        "type": "module"
+    },
+    "action": {
+        "default_popup": "src/popup/popup.html",
+        "default_icon": {
+            "16": "src/icons/icon16.svg",
+            "48": "src/icons/icon48.svg",
+            "128": "src/icons/icon128.svg"
+        }
+    },
+    "options_page": "src/options/options.html",
+    "icons": {
+        "16": "src/icons/icon16.svg",
+        "48": "src/icons/icon48.svg",
+        "128": "src/icons/icon128.svg"
+    },
+    "content_scripts": [
+        {
+            "matches": ["<all_urls>"],
+            "js": ["src/content/contentScript.js"],
+            "run_at": "document_idle"
+        }
+    ],
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "src/vendor/tesseract/worker.min.js",
+                "src/vendor/tesseract/tesseract-core.wasm.js",
+                "src/vendor/tesseract/tesseract-core.wasm",
+                "src/vendor/tesseract/lang-data/**"
+            ],
+            "matches": ["<all_urls>"],
+            "extension_pages": true
+        }
+    ],
+    "content_security_policy": {
+        "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
     }
-  },
-  "icons": {
-    "16": "src/icons/icon16.svg",
-    "48": "src/icons/icon48.svg",
-    "128": "src/icons/icon128.svg"
-  },
-  "content_scripts": [
-    {
-      "matches": [
-        "<all_urls>"
-      ],
-      "js": [
-        "src/content/contentScript.js"
-      ],
-      "run_at": "document_idle"
-    }
-  ]
 }
