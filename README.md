@@ -1,20 +1,18 @@
 # SnapTranslate
 
-A Chrome/Edge browser extension that enables interactive screen region selection. In the future, will have image processing and translation capabilities.
+A Chrome/Edge (Manifest V3) browser extension that lets you drag-select a rectangular region of any webpage, capture it as an image, run OCR on it, and translate the detected text without leaving the page.
+
+---
 
 ## What It Does
 
-This extension allows users to:
+1. **Select any rectangular region on a webpage**: click the extension icon and drag to select an area.
+2. **Visual feedback**: see a blue dashed rectangle with a semi-transparent overlay as you drag.
+3. **Capture & OCR**: the selected region is captured as an image and run through Tesseract.js to extract any text it contains.
+4. **Translate**: extracted text is sent to the DeepL API and translated into your configured target language.
+5. **Results box**: translated text is displayed near your selection, with loading and error states handled along the way.
 
-1. **Select any rectangular region on a webpage** - Click the extension icon and drag to select an area
-2. **Visual feedback** - See a blue dashed rectangle with semi-transparent overlay as you drag
-3. **Capture coordinates** - Sends the selected region's viewport coordinates to the background service worker
-
-## Planned Features
-
-- **Image capture/cropping** - Extract the selected region as an image
-- **OCR** - Detect and extract text from the captured image
-- **Translation** - Translate detected text to other languages
+---
 
 ## How It Works
 
