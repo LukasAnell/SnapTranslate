@@ -1,3 +1,20 @@
+function getCheckedOcrLanguages() {
+    const boxes = document.querySelectorAll(
+        '#ocrLanguages input[type="checkbox"]',
+    );
+
+    const langs = Array.from(boxes)
+        .filter((box) => box.checked)
+        .map((box) => box.value);
+
+    // English is always included
+    if (!langs.includes("eng")) {
+        langs.unshift("eng");
+    }
+
+    return langs;
+}
+
 document.getElementById("save").addEventListener("click", () => {
     const apiKey = document.getElementById("apiKey").value;
     const deeplPlan = document.getElementById("deeplPlan").value;
