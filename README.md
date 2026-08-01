@@ -50,20 +50,27 @@ Open the extension's **Options** page (right-click the toolbar icon -> Options, 
 ## Project Structure
 
 ```
+❯ tree --dirsfirst --gitignore
 SnapTranslate/
 ├── src/
 │   ├── background/
-│   │   └── background.js      # Service worker
+│   │   └── background.js      # Service worker for message routing, OCR/translation coordination
 │   ├── content/
-│   │   └── contentScript.js   # Content script for page interaction
+│   │   └── contentScript.js   # Selection overlay, mouse interactions
 │   ├── popup/
 │   │   ├── popup.html         # Extension popup UI
 │   │   ├── popup.js           # Popup logic
-│   │   └── popup.css          # Popup styling
+│   │   └── popup.css          # Popup styling (empty for now)
+│   ├── offscreen/             # Offscreen document for hosting the Tesseract.js OCR worker
+│   ├── options/               # Options page for configuring DeepL API key/plan, target language, and OCR language selection
+│   ├── vendor/tesseract/      # Vendored Tesseract.js core, wasm, and per-language .traineddata files
 │   └── icons/                 # Extension icons
 ├── manifest.json              # Extension configuration
+├── PRIVACY.md                 # Privacy policy
 └── package.json               # Project metadata
 ```
+
+---
 
 ## Technical Details
 
@@ -80,9 +87,11 @@ SnapTranslate/
 
 ## Notes
 
-- The extension cannot run on browser internal pages (e.g., `chrome://extensions`, `chrome://settings`, Chrome Web Store)
-- For best results, use on regular websites
-- If the extension doesn't work immediately after installation, refresh the webpage
+- The extension cannot run on browser internal pages (e.g., `chrome://extensions`, `chrome://settings`, Chrome Web Store).
+- For best results, use on regular websites.
+- If the extension doesn't work immediately after installation, refresh the webpage.
+
+---
 
 ## License
 
