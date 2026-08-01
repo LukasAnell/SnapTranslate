@@ -186,12 +186,35 @@
                     const croppedImageData = canvas.toDataURL("image/png");
 
                     // Send to background.js for OCR/translation
+                    let settled = false;
+                    const timeoutId = setTimeout(() => {
+                        if (settled) {
+                            return;
+                        }
+
+                        settled = true;
+
+                        updateResultBox({
+                            error:
+                                "Timed out waiting for OCR/translation. " +
+                                "Check your network connection and try again.",
+                        });
+                    }, 30000);
+
                     chrome.runtime.sendMessage(
                         {
                             action: "process-image",
                             imageData: croppedImageData,
                         },
                         (resp) => {
+                            if (settled) {
+                                return;
+                            }
+
+                            settled = true;
+
+                            clearTimeout(timeoutId);
+
                             if (chrome.runtime.lastError) {
                                 console.error(
                                     "Error sending process-image message:",

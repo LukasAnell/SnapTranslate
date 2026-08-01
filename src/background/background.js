@@ -49,14 +49,21 @@ async function translateWithDeepL(text, targetLang) {
         target_lang: targetLang || configuredTargetLang,
     });
 
-    const response = await fetch(url, {
-        method: "POST",
-        headers: {
-            Authorization: `DeepL-Auth-Key ${apiKey}`,
-            "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body,
-    });
+    let response;
+    try {
+        response = await fetch(url, {
+            method: "POST",
+            headers: {
+                Authorization: `DeepL-Auth-Key ${apiKey}`,
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body,
+        });
+    } catch (networkError) {
+        return {
+            error: `Could not reach DeepL: ${networkError.message || networkError}`,
+        };
+    }
 
     if (!response.ok) {
         const errorText = await response.text();
@@ -121,29 +128,33 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
                         ocrLanguages,
                     },
                     async (resp) => {
-                        if (chrome.runtime.lastError) {
-                            sendResponse({
-                                error: chrome.runtime.lastError.message,
-                            });
+                        try {
+                            if (chrome.runtime.lastError) {
+                                sendResponse({
+                                    error: chrome.runtime.lastError.message,
+                                });
 
-                            return;
+                                return;
+                            }
+
+                            if (resp?.ocr?.text) {
+                                const translationResult =
+                                    await translateWithDeepL(resp.ocr.text);
+
+                                sendResponse({
+                                    ...resp,
+                                    translation: translationResult.translation,
+                                    translationError: translationResult.error,
+                                });
+
+                                return;
+                            }
+
+                            sendResponse(resp);
+                        } catch (error) {
+                            // return error as response or the UI hangs forever
+                            sendResponse({ error: String(error) });
                         }
-
-                        if (resp?.ocr?.text) {
-                            const translationResult = await translateWithDeepL(
-                                resp.ocr.text,
-                            );
-
-                            sendResponse({
-                                ...resp,
-                                translation: translationResult.translation,
-                                translationError: translationResult.error,
-                            });
-
-                            return;
-                        }
-
-                        sendResponse(resp);
                     },
                 );
             } catch (error) {
