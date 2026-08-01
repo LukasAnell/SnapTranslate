@@ -1,11 +1,15 @@
 async function getTranslationConfig() {
     return new Promise((resolve) => {
-        chrome.storage.local.get(["deeplApiKey", "deeplPlan"], (result) => {
-            resolve({
-                apiKey: result.deeplApiKey || "",
-                plan: result.deeplPlan || "free",
-            });
-        });
+        chrome.storage.local.get(
+            ["deeplApiKey", "deeplPlan", "targetLang"],
+            (result) => {
+                resolve({
+                    apiKey: result.deeplApiKey || "",
+                    plan: result.deeplPlan || "free",
+                    targetLang: result.targetLang || "EN-US",
+                });
+            },
+        );
     });
 }
 
@@ -16,7 +20,11 @@ function getDeepLBaseUrl(plan) {
 }
 
 async function translateWithDeepL(text, targetLang) {
-    const { apiKey, plan } = await getTranslationConfig();
+    const {
+        apiKey,
+        plan,
+        targetLang: configuredTargetLang,
+    } = await getTranslationConfig();
     if (!apiKey) {
         return { error: "DeepL API key not configured." };
     }
@@ -24,7 +32,7 @@ async function translateWithDeepL(text, targetLang) {
     const url = `${getDeepLBaseUrl(plan)}/v2/translate`;
     const body = new URLSearchParams({
         text,
-        target_lang: targetLang,
+        target_lang: targetLang || configuredTargetLang,
     });
 
     const response = await fetch(url, {
@@ -100,7 +108,6 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
                         if (resp?.ocr?.text) {
                             const translationResult = await translateWithDeepL(
                                 resp.ocr.text,
-                                "EN",
                             );
                             sendResponse({
                                 ...resp,
