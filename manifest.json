@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "SnapTranslate",
-    "version": "1.0",
+    "version": "1.0.1",
     "description": "Select any region of a webpage, extract the text with on-device OCR, and translate it instantly using the DeepL Translation API.",
     "permissions": ["activeTab", "scripting", "tabs", "storage", "offscreen"],
 
